@@ -20,8 +20,10 @@ public:
 	ARIA(unsigned int w,unsigned int h)
 	{
 		SDL_Init(SDL_INIT_EVERYTHING);
+		TTF_Init();
 		SDL_FreeSurface(scr);
 		scr=SDL_SetVideoMode(w,720,32,SDL_SWSURFACE|SDL_RESIZABLE);
+		font=TTF_OpenFont("fonts/lazy.ttf",28);
 	}
 	~ARIA()
 	{
