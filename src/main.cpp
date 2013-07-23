@@ -10,18 +10,29 @@
 using namespace std;
 
 SDL_Thread* testing;
-stringinput_data* test;
-void* test2=test;
+stringinput_data test;
+SDL_Surface* text;
+
 int main (int argc, char* args[])
 {
 	ARIA aria(1080,720);
 	//get_input=SDL_CreateThread(getinput,input,NULL);
-	SDL_Rect temp={100,100,scr->w,scr->h};
-	SDL_FillRect(scr,&temp,SDL_MapRGB(scr->format,0xFF,0xFF,0xFF));
-	testing=SDL_CreateThread(stringinput,test2);
-	SDL_Surface* text=TTF_RenderText_Solid(font,mystring.c_str(),(SDL_Color){0,0xFF,0});
-	SDL_BlitSurface(text,&temp,scr,NULL);
-	SDL_Flip(scr);
-	SDL_Delay(1000);
+	SDL_Rect temp={0,0,scr->w,scr->h};
+	testing=SDL_CreateThread(stringinput,&test);
+	while(!ended)
+	{
+		{
+			access(test.mutex);
+			if(test.dataready)
+			{
+				text=TTF_RenderText_Solid(font,test.input.c_str(),(SDL_Color){0,0xFF,0});
+			}
+		}
+		SDL_BlitSurface(text,&temp,scr,NULL);
+		SDL_Flip(scr);
+		SDL_FillRect(scr,&temp,SDL_MapRGB(scr->format,0x0,0x0,0xFF));
+		aria.handleevents();
+		SDL_Delay(100);
+	}
 	return 0;
 }
