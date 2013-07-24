@@ -1,3 +1,5 @@
+Debug/
+
 # Compiled Object files
 *.slo
 *.lo
@@ -14,4 +16,3 @@
 
 # Temporary Files
 *.tmp
-/Debug

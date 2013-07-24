@@ -21,6 +21,7 @@ public:
 	{
 		SDL_Init(SDL_INIT_EVERYTHING);
 		TTF_Init();
+		SDL_EnableUNICODE( SDL_ENABLE );
 		SDL_FreeSurface(scr);
 		scr=SDL_SetVideoMode(w,720,32,SDL_SWSURFACE|SDL_RESIZABLE);
 		font=TTF_OpenFont("fonts/lazy.ttf",28);
@@ -31,11 +32,8 @@ public:
 	}
 	void handleevents()
 	{
-		while(SDL_PollEvent(&event))
-		{
-			if(event.type==SDL_QUIT)
+		if(event.type==SDL_QUIT)
 				ended=true;
-		}
 	}
 };
 
