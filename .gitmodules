@@ -1,0 +1,3 @@
+[submodule "physim"]
+	path = physim
+	url = https://github.com/PhySim/physim.git
