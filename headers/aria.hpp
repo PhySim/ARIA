@@ -13,6 +13,7 @@
 
 #include <headers/events.hpp>
 #include <headers/global_assets.hpp>
+#include <headers/word.hpp>
 
 class ARIA
 {
