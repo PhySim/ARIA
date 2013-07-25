@@ -22,43 +22,59 @@ bool ended=0;
 SDL_Surface* scr;
 SDL_Event event;
 TTF_Font* font;
+unsigned int global_font_size;
 
 class graphicstring
 {
 	char new_char;
 	timer imagetimer;
 	timer start,repeat;
-	unsigned int start_time,repeat_time,graphic_update_interval;
+	unsigned int start_time,repeat_time,graphic_update_interval,max_char;
+	int lines,line,xspacing,yspacing;
 public:
-	SDL_Rect rect;
-	string text;
-	SDL_Surface* image;
+	SDL_Rect rect[3];
+	string text[3];
+	SDL_Surface* image[3];
 	bool done;
 	graphicstring(unsigned int UstartT=500,unsigned int UrepeatT=50,unsigned int Ugraphic_update_interval=50)
 	{
-		done=0;
+		lines=3;
+		line=done=0;
+		xspacing=10;yspacing=50;
+		max_char=2*(scr->w-xspacing)/global_font_size;
 		start_time=UstartT;repeat_time=UrepeatT;graphic_update_interval=Ugraphic_update_interval;
-		text="empty";
-		rect.x=10;rect.y=10;
-		renderimage(1);
+		for(int i=0;i<lines;i++)
+		{
+			text[i]="";
+			rect[i].x=xspacing;
+			rect[i].y=yspacing+i*global_font_size;
+		}
+		text[0]="$";
+		renderimages(1);
 		new_char=0;
-		text="a";
 	}
 	~graphicstring()
 	{
-		SDL_FreeSurface(image);
+		for(int i=0;i<lines;i++)
+			SDL_FreeSurface(image[i]);
 	}
-	SDL_Surface* renderimage(bool forced=0)
+	void renderimages(bool forced=0)
 	{
 		if(imagetimer.elapse()>graphic_update_interval||forced)
 		{
-			image=TTF_RenderText_Solid(font,text.c_str(),(SDL_Color){0,0xFF,0});
-			rect.w=image->w;
-			rect.h=image->h;
+			for(int i=0;i<=line;i++)
+			{
+				if(text[i].size()>0)
+				{
+					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0,0xFF,0});
+					rect[i].w=image[i]->w;
+					rect[i].h=image[i]->h;
+				}
+				else image[i]=NULL;
+			}
 			imagetimer.reset();
 			imagetimer.start();
 		}
-		return image;
 	}
 	void handle_input(SDL_Event event)
 	{
@@ -108,14 +124,25 @@ public:
 						//do nothing
 					break;
 					case SDLK_BACKSPACE:
-						if(text.size()>1)
-							text.erase(text.size()-1);
+						if(text[line].size()>1)
+							text[line].erase(text[line].size()-1);
+						else if(line>0)
+						{
+							text[line]="";
+							line--;
+						}
 					break;
 					case SDLK_RETURN:
 						done=true;
 					break;
 					default:
-						text+=new_char;
+						if(text[line].size()<max_char)
+							text[line]+=new_char;
+						else if(line+1<lines)
+						{
+							line++;
+							text[line]+=new_char;
+						}
 					break;
 					}
 				}
@@ -135,8 +162,9 @@ public:
 	}
 	void display()
 	{
-		renderimage();
-		SDL_BlitSurface(image,NULL,scr,&rect);
+		renderimages();
+		for(int i=0;i<=line&&image[i]!=NULL;i++)
+			SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
 	}
 };
 

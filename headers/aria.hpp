@@ -16,15 +16,19 @@
 
 class ARIA
 {
+private:
+	unsigned int font_size;
 public:
-	ARIA(unsigned int w,unsigned int h)
+	ARIA(unsigned int w,unsigned int h,unsigned int U_font_size=40)
 	{
 		SDL_Init(SDL_INIT_EVERYTHING);
+		SDL_WM_SetCaption("ARIA:Automated Response-Intelligent Acquisition -By Reuben John",NULL);
 		TTF_Init();
 		SDL_EnableUNICODE( SDL_ENABLE );
 		SDL_FreeSurface(scr);
+		::global_font_size=font_size=U_font_size;
 		scr=SDL_SetVideoMode(w,720,32,SDL_SWSURFACE|SDL_RESIZABLE);
-		font=TTF_OpenFont("fonts/lazy.ttf",28);
+		font=TTF_OpenFont("fonts/lazy.ttf",font_size);
 	}
 	~ARIA()
 	{

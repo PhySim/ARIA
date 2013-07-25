@@ -24,8 +24,8 @@ int main (int argc, char* args[])
 		if(!user.done)
 		{
 			user.handle_input(event);
-			user.display();
 		}
+		user.display();
 		SDL_Flip(scr);
 		SDL_FillRect(scr,&temp,SDL_MapRGB(scr->format,0x0,0x0,0xFF));
 		SDL_Delay(10);

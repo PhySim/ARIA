@@ -16,3 +16,6 @@ Debug/
 
 # Temporary Files
 *.tmp
+
+# original backup files
+*.orig
