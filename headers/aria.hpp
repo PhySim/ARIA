@@ -13,14 +13,14 @@
 
 #include <headers/events.hpp>
 #include <headers/global_assets.hpp>
-#include <headers/word.hpp>
+#include <headers/DB.hpp>
 
 class ARIA
 {
 private:
 	unsigned int font_size;
 public:
-	ARIA(unsigned int w,unsigned int h,unsigned int U_font_size=40)
+	ARIA(unsigned int w,unsigned int h,unsigned int U_font_size=global_font_size)
 	{
 		SDL_Init(SDL_INIT_EVERYTHING);
 		SDL_WM_SetCaption("ARIA:Automated Response-Intelligent Acquisition -By Reuben John",NULL);
@@ -37,8 +37,11 @@ public:
 	}
 	void handleevents()
 	{
+		SDL_PollEvent(&event);
 		if(event.type==SDL_QUIT)
+		{
 				ended=true;
+		}
 	}
 };
 

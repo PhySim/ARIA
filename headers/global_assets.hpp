@@ -22,7 +22,7 @@ bool ended=0;
 SDL_Surface* scr;
 SDL_Event event;
 TTF_Font* font;
-unsigned int global_font_size;
+unsigned int global_font_size=32,global_graphicstring_id=0;
 
 class graphicstring
 {
@@ -31,33 +31,10 @@ class graphicstring
 	int lines,line,xspacing,yspacing;
 	SDL_Rect rect[3];
 	string text[3];
-	SDL_Surface* image[3];
-public:
-	bool done;
-	graphicstring(string U_text,unsigned int Ugraphic_update_interval=50)
-	{
-		lines=3;
-		line=done=0;
-		xspacing=10;yspacing=50;
-		max_char=2*(scr->w-xspacing)/global_font_size;
-		graphic_update_interval=Ugraphic_update_interval;
-		for(int i=0;i<lines;i++)
-		{
-			text[i]="";
-			rect[i].x=xspacing;
-			rect[i].y=yspacing+i*global_font_size;
-		}
-		set(U_text);
-		renderimages(1);
-	}
-	~graphicstring()
-	{
-		for(int i=0;i<lines;i++)
-			SDL_FreeSurface(image[i]);
-	}
+protected:
 	void renderimages(bool forced=0)
 	{
-		if(imagetimer.elapse()>graphic_update_interval||forced)
+		if(imagetimer.elapse()>graphic_update_interval)
 		{
 			for(int i=0;i<=line;i++)
 			{
@@ -73,6 +50,9 @@ public:
 			imagetimer.start();
 		}
 	}
+public:
+	SDL_Surface* image[3];
+	bool done;
 	void set(string newstring)
 	{
 		unsigned int progress=0;
@@ -80,9 +60,32 @@ public:
 		while(progress<newstring.size())
 		{
 			line++;
-			text[line]=newstring.substr(progress,max_char<newstring.size()?max_char:newstring.size());
+			text[line]=newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress));
 			progress+=text[line].size();
 		}
+	}
+	graphicstring(string U_text="$",unsigned int Ugraphic_update_interval=50)
+	{
+		lines=3;
+		line=done=0;
+		xspacing=10;yspacing=10;
+		max_char=2*(scr->w-xspacing)/global_font_size;
+		graphic_update_interval=Ugraphic_update_interval;
+		for(int i=0;i<lines;i++)
+		{
+			text[i]="";
+			rect[i].x=xspacing;
+			rect[i].y=yspacing+(global_graphicstring_id*(lines+1)+i)*global_font_size;
+		}
+		global_graphicstring_id++;
+		set(U_text);
+		renderimages(1);
+		imagetimer.start();
+	}
+	~graphicstring()
+	{
+		for(int i=0;i<lines;i++)
+			SDL_FreeSurface(image[i]);
 	}
 	void display()
 	{
@@ -92,7 +95,7 @@ public:
 	}
 };
 
-class graphicstringinput
+class graphicstringinput:public graphicstring
 {
 	char new_char;
 	timer imagetimer;
@@ -119,30 +122,13 @@ public:
 		}
 		text[0]="$";
 		renderimages(1);
+		imagetimer.start();
 		new_char=0;
 	}
 	~graphicstringinput()
 	{
 		for(int i=0;i<lines;i++)
 			SDL_FreeSurface(image[i]);
-	}
-	void renderimages(bool forced=0)
-	{
-		if(imagetimer.elapse()>graphic_update_interval||forced)
-		{
-			for(int i=0;i<=line;i++)
-			{
-				if(text[i].size()>0)
-				{
-					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0,0xFF,0});
-					rect[i].w=image[i]->w;
-					rect[i].h=image[i]->h;
-				}
-				else image[i]=NULL;
-			}
-			imagetimer.reset();
-			imagetimer.start();
-		}
 	}
 	void handle_input(SDL_Event event)
 	{
@@ -227,12 +213,6 @@ public:
 		{
 			start.reset();
 		}
-	}
-	void display()
-	{
-		renderimages();
-		for(int i=0;i<=line&&image[i]!=NULL;i++)
-			SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
 	}
 };
 

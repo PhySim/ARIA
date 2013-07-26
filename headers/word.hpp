@@ -11,10 +11,14 @@
 #include <string>
 #include <vector>
 
-#include <headers/DB.hpp>
+#include <headers/stats.hpp>
 
 using namespace std;
 
+struct wordchecklist
+{
+	unsigned int name,type,stats;
+};
 class word:public stats
 {
 	string name,type;
@@ -22,6 +26,10 @@ public:
 	string getname()
 	{
 		return name;
+	}
+	string gettype()
+	{
+		return type;
 	}
 	string set_name(string U_name)
 	{
@@ -31,32 +39,21 @@ public:
 	{
 		return type=U_type;
 	}
-	word(string U_name="NULL")
+	word(string U_name="$")
 	{
-		if(strcmp(U_name.c_str(),"NULL"))
-			name=U_name;
-		else name="";
+		name=U_name;
 		type="";
 	}
 	~word()
 	{
 
 	}
-};
-
-word findword(string search)
-{
-	word temp;
-	ifstream fin("databases/words.dat",ios::binary);
-	int found=0;
-	while(fin.read((char*)&temp,sizeof temp)&&!found)
+	wordchecklist checklist(wordchecklist &U)
 	{
-		if(strcmpi(temp.getname().c_str(),search.c_str())==0)
-		{
-			found=1;
-		}
+		U.name=(name.size()+1);
+		U.type=(type.size()+1);
+		U.stats=sizeof(stats);
+		return U;
 	}
-	fin.close();
-	return temp;
-}
+};
 #endif /* WORD_H_ */

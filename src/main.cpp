@@ -22,7 +22,6 @@ int main (int argc, char* args[])
 	//get_input=SDL_CreateThread(getinput,input,NULL);
 	while(!ended)
 	{
-		SDL_PollEvent(&event);
 		aria.handleevents();
 		if(!user.done)
 		{
