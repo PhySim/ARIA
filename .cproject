@@ -51,13 +51,13 @@
 						</toolChain>
 					</folderInfo>
 					<fileInfo id="cdt.managedbuild.config.gnu.mingw.exe.debug.1307145438.311831273" name="stats.hpp" rcbsApplicability="disable" resourcePath="headers/stats.hpp" toolsToInvoke=""/>
-					<fileInfo id="cdt.managedbuild.config.gnu.mingw.exe.debug.1307145438.856397707" name="word_reader.cpp" rcbsApplicability="disable" resourcePath="src/word_reader.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.exe.debug.1225581448.1422265991">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.exe.debug.1225581448.1422265991" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.exe.debug.1225581448"/>
+					<fileInfo id="cdt.managedbuild.config.gnu.mingw.exe.debug.1307145438.1663571843" name="word_reader.cpp" rcbsApplicability="disable" resourcePath="src/word_reader.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.exe.debug.1225581448.268981556">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.exe.debug.1225581448.268981556" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.mingw.exe.debug.1225581448"/>
 					</fileInfo>
 					<sourceEntries>
 						<entry excluding="images|physim/scripts|src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="images"/>
-						<entry excluding="main.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
+						<entry excluding="word_reader.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="src"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

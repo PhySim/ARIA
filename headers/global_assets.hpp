@@ -40,7 +40,7 @@ protected:
 			{
 				if(text[i].size()>0)
 				{
-					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0,0xFF,0});
+					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0xFF,0,0});
 					rect[i].w=image[i]->w;
 					rect[i].h=image[i]->h;
 				}
@@ -60,7 +60,7 @@ public:
 		while(progress<newstring.size())
 		{
 			line++;
-			text[line]=newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress));
+			text[line].assign(newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress)));
 			progress+=text[line].size();
 		}
 	}
@@ -95,25 +95,19 @@ public:
 	}
 };
 
-class graphicstringinput:public graphicstring
+class graphicstringinput
 {
+	SDL_Rect rect[3];
+	string text[3];
+	SDL_Surface* image[3];
 	char new_char;
 	timer imagetimer;
 	timer start,repeat;
 	unsigned int start_time,repeat_time,graphic_update_interval,max_char;
 	int lines,line,xspacing,yspacing;
-public:
-	SDL_Rect rect[3];
-	string text[3];
-	SDL_Surface* image[3];
-	bool done;
-	graphicstringinput(unsigned int UstartT=500,unsigned int UrepeatT=50,unsigned int Ugraphic_update_interval=50)
+	void reset()
 	{
-		lines=3;
 		line=done=0;
-		xspacing=10;yspacing=50;
-		max_char=2*(scr->w-xspacing)/global_font_size;
-		start_time=UstartT;repeat_time=UrepeatT;graphic_update_interval=Ugraphic_update_interval;
 		for(int i=0;i<lines;i++)
 		{
 			text[i]="";
@@ -121,8 +115,38 @@ public:
 			rect[i].y=yspacing+i*global_font_size;
 		}
 		text[0]="$";
-		renderimages(1);
+		imagetimer.reset();
 		imagetimer.start();
+	}
+public:
+	string all;
+	bool done;
+	void renderimages(bool forced=0)
+	{
+		if(imagetimer.elapse()>graphic_update_interval)
+		{
+			for(int i=0;i<=line;i++)
+			{
+				if(text[i].size()>0)
+				{
+					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0,0xFF,0});
+					rect[i].w=image[i]->w;
+					rect[i].h=image[i]->h;
+				}
+				else image[i]=NULL;
+			}
+			imagetimer.reset();
+			imagetimer.start();
+		}
+	}
+	graphicstringinput(unsigned int UstartT=500,unsigned int UrepeatT=50,unsigned int Ugraphic_update_interval=50)
+	{
+		reset();
+		lines=3;
+		xspacing=10;yspacing=50;
+		max_char=2*(scr->w-xspacing)/global_font_size;
+		start_time=UstartT;repeat_time=UrepeatT;graphic_update_interval=Ugraphic_update_interval;
+		renderimages(1);
 		new_char=0;
 	}
 	~graphicstringinput()
@@ -187,7 +211,7 @@ public:
 						}
 					break;
 					case SDLK_RETURN:
-						done=true;
+						finished();
 					break;
 					default:
 						if(text[line].size()<max_char)
@@ -212,6 +236,26 @@ public:
 		else
 		{
 			start.reset();
+		}
+	}
+	void display()
+	{
+		renderimages();
+		for(int i=0;i<=line&&image[i]!=NULL;i++)
+			SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
+	}
+	void input(string &temp)
+	{
+		temp=text[0].substr(1,text[0].size()-1);
+		temp+=text[1].substr(0,text[1].size());
+		temp+=text[2].substr(0,text[2].size());
+	}
+	void finished(bool U=1)
+	{
+		done=U;
+		if(!U)
+		{
+			reset();
 		}
 	}
 };

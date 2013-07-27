@@ -9,15 +9,16 @@
 
 using namespace std;
 
+int cu=0,ne=0;
+
 SDL_Rect temp={100,100,200,200};
 int main(int argc,char* args[])
 {
 	ARIA aria(1080,720);
 	word find;
-	int cu=0,ne=0;
-	readword(find,0,0);
-	graphicstring name(find.getname());
-	graphicstring type(find.gettype());
+	readword(find,ne,0);
+	graphicstring name(find.name);
+	graphicstring type(find.type);
 	char* a=new char[100];string b;
 	itoa(find.rating,a,10);b=a;
 	graphicstring rating(b);
@@ -37,8 +38,8 @@ int main(int argc,char* args[])
 				SDL_Delay(200);
 				cu=ne;
 				ne=readword(find,ne,0).end;
-				name.set(find.getname());
-				type.set(find.gettype());
+				name.set(find.name);
+				type.set(find.type);
 				char* a=new char[100];string b;
 				itoa(find.rating,a,10);b=a;
 				rating.set(b);

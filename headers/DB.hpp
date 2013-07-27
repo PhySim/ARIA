@@ -16,6 +16,7 @@ using namespace std;
 
 bool DB_corrupted=false;
 
+
 class DB_info
 {
 	string version;
@@ -75,102 +76,65 @@ struct WordResults
 	}
 }WordResult;
 
-void writeword(word U)
+void writeword(word &U)
 {
-	wordchecklist check=U.checklist(check);
+	word_io io(U);
 
-	ofstream list(wordDB.listfile(),ios::app);
-	ofstream data(wordDB.datafile(),ios::app);
+	ofstream data(wordDB.datafile(),ios::app|ios::binary);
 
-	list<< U.getname().size()<<" "<<U.gettype().size()<<"\n";
-	data<<U.getname()<<"	"<<U.gettype()<<"	"<<U.rating<<"	"<<U.usage<<"\n";
+	data.write((char*)&io,sizeof(io));
 
-	list.close();
 	data.close();
 }
-WordResults readword(word &U,int x1,int x2)
+void readword(word &U)
 {
-	wordchecklist check;
-
-	ifstream list(wordDB.listfile(),ios::app);
-	ifstream data(wordDB.datafile(),ios::app);
-
-	list.seekg(x2);
-	WordResult.end=data.tellg();
-	data.seekg(x1);
-	list>>check.name>>check.type;
-	string temp;
-	data>>temp;U.set_name(temp);
-	data>>temp;U.set_type(temp);
-	data>>U.rating;
-	data>>U.usage;
-	WordResult.end=data.tellg();
-
-	list.close();
-	data.close();
-	return WordResult;
-}
-WordResults findword(word &U)
-{
-	word temp;
-	wordchecklist check;
-
-	ifstream list(wordDB.listfile(),ios::binary);
+	word_io word_io_buf;
 	ifstream data(wordDB.datafile(),ios::binary);
 
-	bool found=false;
-	WordResult.reset();
-	while(list>>check.name>>check.type&&!found)
+	data.read((char*)&word_io_buf,sizeof(word_io_buf));
+
+	U=ExtractWord(word_io_buf);
+
+	data.close();
+}
+WordResults* searchword(word &U)
+{
+	word_io io;
+	ifstream data(wordDB.datafile(),ios::binary);
+
+	while(data.read((char*)&io,sizeof(io)))
 	{
-		string tmp;
 
-		data>>tmp;
-		temp.set_name(tmp);
-		if(temp.getname().size()!=check.name)
-			DB_corrupted=true;
-		if(strcmpi(U.getname().c_str(),temp.getname().c_str())==0)
+		word extracted=ExtractWord(io);
+
+		if(strcmpi(extracted.name.c_str(),U.name.c_str())==0)
 		{
+			U=ExtractWord(io);
 			WordResult.name.match_id=1;
-			WordResult.name.loc=data.tellg();
-			if(U.getname()==temp.getname())
-			{
-				WordResult.name.match_id=2;
-			}
+			if(strcmp(extracted.name.c_str(),U.name.c_str())==0)
+				{
+					WordResult.name.match_id=2;
+				}
 		}
-
-		data>>tmp;
-		temp.set_type(tmp);
-		if(temp.gettype().size()!=check.type)
-			DB_corrupted=true;
-		if(strcmpi(U.gettype().c_str(),temp.gettype().c_str())==0)
+		if(strcmpi(extracted.type.c_str(),U.type.c_str())==0)
 		{
 			WordResult.type.match_id=1;
-			if(U.gettype()==temp.gettype())
-			{
-				WordResult.type.match_id=2;
-			}
+			if(strcmp(extracted.type.c_str(),U.type.c_str())==0)
+				{
+					WordResult.type.match_id=2;
+				}
 		}
-		unsigned int i;
-		data>>i;
-		if(U.rating==(short unsigned int)i)
+		if(extracted.rating==U.rating)
 		{
-			WordResult.rating.match_id=2;
+			WordResult.rating.match_id=1;
 		}
-
-		data>>i;
-		if(U.usage==i)
+		if(extracted.usage==U.usage)
 		{
-			WordResult.usage.match_id=2;
+			WordResult.usage.match_id=1;
 		}
 	}
-
-	list.close();
 	data.close();
-	if(found)
-	{
-		U=temp;
-	}
-	return WordResult;
+	return &WordResult;
 }
 
 #endif /* DB_H_ */
