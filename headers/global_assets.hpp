@@ -110,11 +110,11 @@ class graphicstringinput
 		line=done=0;
 		for(int i=0;i<lines;i++)
 		{
-			text[i]="";
+			text[i].assign("");
 			rect[i].x=xspacing;
 			rect[i].y=yspacing+i*global_font_size;
 		}
-		text[0]="$";
+		text[0].assign("$");
 		imagetimer.reset();
 		imagetimer.start();
 	}
@@ -139,15 +139,16 @@ public:
 			imagetimer.start();
 		}
 	}
-	graphicstringinput(unsigned int UstartT=500,unsigned int UrepeatT=50,unsigned int Ugraphic_update_interval=50)
+	graphicstringinput(unsigned int UstartT=500,unsigned int UrepeatT=25,unsigned int Ugraphic_update_interval=50)
 	{
-		reset();
-		lines=3;
 		xspacing=10;yspacing=50;
+		lines=3;
 		max_char=2*(scr->w-xspacing)/global_font_size;
 		start_time=UstartT;repeat_time=UrepeatT;graphic_update_interval=Ugraphic_update_interval;
+		reset();
 		renderimages(1);
 		new_char=0;
+		global_graphicstring_id++;
 	}
 	~graphicstringinput()
 	{

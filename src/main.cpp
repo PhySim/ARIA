@@ -6,6 +6,7 @@
  */
 
 #include <headers/aria.hpp>
+#include <headers/sentence_struc.hpp>
 
 using namespace std;
 
@@ -13,18 +14,18 @@ int main (int argc, char* args[])
 {
 	ARIA aria(1080,720);
 
-	word hello("hey");
-	hello.type="salutation";
-	hello.rating=1;
+	sentence_struc sen;
+	//sen.set("salutations");
+	readsentence_struc(sen);
 	framer frame(30,40);
 	graphicstringinput user;
-	//writeword(hello);
-	word_io io;
-	readword(hello);
-	string a="nope";
+	string a;
+	a.assign(sen.all.c_str());
 
 	graphicstring test;
 	test.set(a);
+
+	SDL_Delay(250);
 	//get_input=SDL_CreateThread(getinput,input,NULL);
 	while(!ended)
 	{
@@ -36,19 +37,18 @@ int main (int argc, char* args[])
 		else
 		{//computers turn to speak!
 			user.input(a);
-			hello.name.assign(a);
-			searchword(hello);
-			if(WordResult.name.match_id==2)
+			sen.set(a.c_str());
+			if(searchsentence_struc(sen)->all.match_id!=0)
 			{
-				test.set("I have seen that word before!");
+				SDL_Delay(2000);
+				test.set(sen.all.c_str());
 			}
 			else
 			{
-				a.insert(0,"I dont know what ");
-				a.append(" means");
-				test.set(a);
+				SDL_Delay(1000);
+				test.set("nope");
 			}
-			WordResult.reset();
+			Sentence_strucResult.reset();
 			user.finished(false);
 		}
 		user.display();

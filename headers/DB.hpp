@@ -10,7 +10,9 @@
 
 #include <fstream>
 #include <string.h>
+
 #include <headers/word.hpp>
+#include <headers/sentence_struc.hpp>
 
 using namespace std;
 
@@ -21,7 +23,6 @@ class DB_info
 {
 	string version;
 	string location;
-	string list_extension;
 	string data_extension;
 	string list_file;
 	string data_file;
@@ -34,47 +35,53 @@ public:
 	{
 		return data_file.c_str();
 	}
-	void set(string U_location,string U_version,string U_list_extension,string U_data_extension)
+	void set(string U_location,string U_version,string U_data_extension)
 	{
-		list_file=(U_location+"/v"+U_version+"."+U_list_extension);
 		data_file=(U_location+"/v"+U_version+"."+U_data_extension);
 	}
-	DB_info(string U_location,string U_version,string U_list_extension,string U_data_extension)
+	DB_info(string U_location,string U_version,string U_data_extension)
 	{
-		set(U_location,U_version,U_list_extension,U_data_extension);
+		set(U_location,U_version,U_data_extension);
 	}
-}wordDB("databases","1","wordlist","worddat");
+}wordDB("databases","2","worddat"),sentence_strucDB("databases","1","sen_strucdat");
 
 struct SearchResults
 {
 	short int  match_id;
-	unsigned int loc;
 	SearchResults reset()
 	{
-		match_id=0;loc=0;
+		match_id=0;;
 		return *this;
+	}
+	SearchResults()
+	{
+		reset();
 	}
 	SearchResults operator=(SearchResults U)
 	{
 		match_id=U.match_id;
-		loc=U.loc;
 		return *this;
 	}
 };
 struct WordResults
 {
+	word* loc;
 	SearchResults name,type,rating,usage;
-	unsigned int start,end;
-	unsigned int size()
-	{
-		return end-start;
-	}
+}WordResult;
+struct Sentence_strucResults
+{
+	sentence_struc* loc;
+	SearchResults struc[sentence_size],all,rating,usage;
 	void reset()
 	{
-		name=type=rating=usage.reset();
-		start=end=0;
+		loc=NULL;
+		all=rating=usage.reset();
+		for(unsigned int i=0;i<sentence_size;i++)
+		{
+			struc[i].reset();
+		}
 	}
-}WordResult;
+}Sentence_strucResult;
 
 void writeword(word &U)
 {
@@ -97,7 +104,7 @@ void readword(word &U)
 
 	data.close();
 }
-WordResults* searchword(word &U)
+WordResults* searchword(word U)
 {
 	word_io io;
 	ifstream data(wordDB.datafile(),ios::binary);
@@ -109,7 +116,7 @@ WordResults* searchword(word &U)
 
 		if(strcmpi(extracted.name.c_str(),U.name.c_str())==0)
 		{
-			U=ExtractWord(io);
+			WordResult.loc=new word(extracted);
 			WordResult.name.match_id=1;
 			if(strcmp(extracted.name.c_str(),U.name.c_str())==0)
 				{
@@ -137,4 +144,55 @@ WordResults* searchword(word &U)
 	return &WordResult;
 }
 
+void writesentence_struc(sentence_struc &U)
+{
+	sentence_struc_io io(U);
+	ofstream data(sentence_strucDB.datafile(),ios::app|ios::binary);
+
+	data.write((char*)&io,sizeof(io));
+
+	data.close();
+}
+void readsentence_struc(sentence_struc &U)
+{
+	sentence_struc_io io(U);
+	ifstream data(sentence_strucDB.datafile(),ios::app|ios::binary);
+
+	data.read((char*)&io,sizeof(io));
+
+	U=ExtractSentence_struc(io);
+	data.close();
+}
+Sentence_strucResults* searchsentence_struc(sentence_struc U)
+{
+	sentence_struc_io io(U);
+	ifstream data(wordDB.datafile(),ios::binary);
+
+	while(data.read((char*)&io,sizeof(io)))
+	{
+
+		sentence_struc extracted=ExtractSentence_struc(io);
+
+		if(strcmpi(extracted.all.c_str(),U.all.c_str()))
+		{
+			Sentence_strucResult.all.match_id=1;
+			Sentence_strucResult.loc=new sentence_struc(extracted);
+			if(strcmp(extracted.all.c_str(),U.all.c_str())==0)
+			{
+				Sentence_strucResult.all.match_id=2;
+			}
+		}
+
+		if(extracted.rating==U.rating)
+		{
+			WordResult.rating.match_id=1;
+		}
+		if(extracted.usage==U.usage)
+		{
+			WordResult.usage.match_id=1;
+		}
+	}
+	data.close();
+	return &Sentence_strucResult;
+}
 #endif /* DB_H_ */

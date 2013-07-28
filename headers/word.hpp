@@ -15,10 +15,7 @@
 
 using namespace std;
 
-struct wordchecklist
-{
-	unsigned int name,type,stats;
-};
+const unsigned int word_size=32;
 
 class word:public stats
 {
@@ -37,11 +34,21 @@ public:
 class word_io
 {
 public:
-	char name_io[64],type_io[64];
+	char name_io[word_size],type_io[word_size];
 	unsigned int rating,usage;
+	void reset()
+	{
+		for(unsigned int i=0;i<word_size;i++)
+		{
+			name_io[i]=type_io[i]=0;
+		}
+
+		rating=50;
+		usage=1;
+	}
 	word_io()
 	{
-		for(int i=0;i<64;i++)
+		for(unsigned int i=0;i<word_size;i++)
 		{
 			name_io[i]=type_io[i]=0;
 		}
@@ -50,13 +57,11 @@ public:
 	}
 	word_io(word U)
 	{
-		for(int i=0;i<64;i++)
-		{
-			name_io[i]=type_io[i]=0;
-		}
-		strcpy(name_io,U.name.c_str());
-		strcpy(type_io,U.type.c_str());
-		rating=usage=49;
+		reset();
+		if(U.name.size())
+			strcpy(name_io,U.name.c_str());
+		if(U.type.size())
+			strcpy(type_io,U.type.c_str());
 	}
 };
 word ExtractWord(word_io U)
