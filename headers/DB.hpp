@@ -163,17 +163,17 @@ void readsentence_struc(sentence_struc &U)
 	U=ExtractSentence_struc(io);
 	data.close();
 }
-Sentence_strucResults* searchsentence_struc(sentence_struc U)
+Sentence_strucResults* searchsentence_struc(sentence_struc &U)
 {
 	sentence_struc_io io(U);
-	ifstream data(wordDB.datafile(),ios::binary);
+	ifstream data(sentence_strucDB.datafile(),ios::binary);
 
-	while(data.read((char*)&io,sizeof(io)))
+	while(!data.eof())
 	{
-
+		data.read((char*)&io,sizeof(io));
 		sentence_struc extracted=ExtractSentence_struc(io);
 
-		if(strcmpi(extracted.all.c_str(),U.all.c_str()))
+		if(strcmpi(extracted.all.c_str(),U.all.c_str())==0)
 		{
 			Sentence_strucResult.all.match_id=1;
 			Sentence_strucResult.loc=new sentence_struc(extracted);
@@ -181,15 +181,14 @@ Sentence_strucResults* searchsentence_struc(sentence_struc U)
 			{
 				Sentence_strucResult.all.match_id=2;
 			}
-		}
-
-		if(extracted.rating==U.rating)
-		{
-			WordResult.rating.match_id=1;
-		}
-		if(extracted.usage==U.usage)
-		{
-			WordResult.usage.match_id=1;
+			if(extracted.rating==U.rating)
+			{
+				Sentence_strucResult.rating.match_id=1;
+			}
+			if(extracted.usage==U.usage)
+			{
+				Sentence_strucResult.usage.match_id=1;
+			}
 		}
 	}
 	data.close();

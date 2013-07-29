@@ -17,6 +17,55 @@ using namespace std;
 
 const unsigned int word_size=32;
 
+struct WORD_TYPE
+{
+	struct
+	{
+		struct
+		{
+			bool physical;
+			bool mental;
+		}action;
+		bool condition;
+		bool state;
+		bool auxiliary;
+	}verb;
+	struct
+	{
+		bool proper,improper;
+		bool plural;
+		bool antecedent;
+	}noun;
+	struct
+	{
+		bool personal,possessive,reflexive,intensive,indefinite,demonstrative,interrogative,relative,reciprocal;
+	}pronoun;
+	struct
+	{
+		bool describe,identify,quantify;
+	}adjective;
+	struct
+	{
+
+	}adverb;
+	struct
+	{
+		bool salutation,command,protest,surprise,pain,pleasure,pity,resignation,enquiry,attention,plead,hesitation,agreement;
+	}interjection;
+	struct
+	{
+		bool coordinating,subordinating,correlative;
+		struct
+		{
+			bool comparison,contrast,cause_effect;
+		}adverb;
+	}conjuction;
+	struct
+	{
+		bool time,space;
+	}preposition;
+}word_type;
+
 class word:public stats
 {
 public:

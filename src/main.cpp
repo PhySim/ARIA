@@ -15,8 +15,6 @@ int main (int argc, char* args[])
 	ARIA aria(1080,720);
 
 	sentence_struc sen;
-	//sen.set("salutations");
-	readsentence_struc(sen);
 	framer frame(30,40);
 	graphicstringinput user;
 	string a;
@@ -38,14 +36,13 @@ int main (int argc, char* args[])
 		{//computers turn to speak!
 			user.input(a);
 			sen.set(a.c_str());
-			if(searchsentence_struc(sen)->all.match_id!=0)
+			searchsentence_struc(sen);
+			if(Sentence_strucResult.all.match_id==1)
 			{
-				SDL_Delay(2000);
 				test.set(sen.all.c_str());
 			}
 			else
 			{
-				SDL_Delay(1000);
 				test.set("nope");
 			}
 			Sentence_strucResult.reset();
