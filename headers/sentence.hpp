@@ -19,7 +19,7 @@ using namespace std;
 const unsigned int sentence_size=32;
 
 
-class sentence_struc:public stats
+class sentence:public stats
 {
 public:
 	vector<string> struc;
@@ -53,7 +53,7 @@ public:
 		}
 	}
 };
-class sentence_struc_io
+class sentence_io
 {
 public:
 	char struc_io[sentence_size][word_size];
@@ -71,7 +71,7 @@ public:
 			}
 	}
 
-	sentence_struc_io(sentence_struc &U)
+	sentence_io(sentence &U)
 	{
 		reset();
 		for(unsigned int i=0;i<sentence_size&&i<U.struc.size();i++)
@@ -87,19 +87,27 @@ public:
 		usage=U.usage;
 	}
 };
-sentence_struc ExtractSentence_struc(sentence_struc_io U)
+class sentence_struc:public stats
 {
-	sentence_struc* sentence_struc_buf=new sentence_struc();
+	WORD_TYPE struc[sentence_size];
+	void set()
+	{
+
+	}
+};
+sentence ExtractSentence(sentence_io U)
+{
+	sentence* sentence_buf=new sentence;
 	for(unsigned int i=0;U.struc_io[i][0];i++)
 	{
 		string a;
 		a.assign(U.struc_io[i]);
-		sentence_struc_buf->struc.push_back(a);
+		sentence_buf->struc.push_back(a);
 	}
-	sentence_struc_buf->all.assign(U.all);
-	sentence_struc_buf->rating=U.rating;
-	sentence_struc_buf->usage=U.usage;
-	return *sentence_struc_buf;
+	sentence_buf->all.assign(U.all);
+	sentence_buf->rating=U.rating;
+	sentence_buf->usage=U.usage;
+	return *sentence_buf;
 }
 
 #endif /* SENTENCE_STRUC_HPP_ */

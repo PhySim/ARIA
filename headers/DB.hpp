@@ -12,7 +12,7 @@
 #include <string.h>
 
 #include <headers/word.hpp>
-#include <headers/sentence_struc.hpp>
+#include <headers/sentence.hpp>
 
 using namespace std;
 
@@ -43,7 +43,7 @@ public:
 	{
 		set(U_location,U_version,U_data_extension);
 	}
-}wordDB("databases","2","worddat"),sentence_strucDB("databases","1","sen_strucdat");
+}wordDB("databases","2","worddat"),sentenceDB("databases","1","sendat");
 
 struct SearchResults
 {
@@ -68,9 +68,9 @@ struct WordResults
 	word* loc;
 	SearchResults name,type,rating,usage;
 }WordResult;
-struct Sentence_strucResults
+struct SentenceResults
 {
-	sentence_struc* loc;
+	sentence* loc;
 	SearchResults struc[sentence_size],all,rating,usage;
 	void reset()
 	{
@@ -81,7 +81,7 @@ struct Sentence_strucResults
 			struc[i].reset();
 		}
 	}
-}Sentence_strucResult;
+}SentenceResult;
 
 void writeword(word &U)
 {
@@ -144,54 +144,54 @@ WordResults* searchword(word U)
 	return &WordResult;
 }
 
-void writesentence_struc(sentence_struc &U)
+void writesentence(sentence &U)
 {
-	sentence_struc_io io(U);
-	ofstream data(sentence_strucDB.datafile(),ios::app|ios::binary);
+	sentence_io io(U);
+	ofstream data(sentenceDB.datafile(),ios::app|ios::binary);
 
 	data.write((char*)&io,sizeof(io));
 
 	data.close();
 }
-void readsentence_struc(sentence_struc &U)
+void readsentence(sentence &U)
 {
-	sentence_struc_io io(U);
-	ifstream data(sentence_strucDB.datafile(),ios::app|ios::binary);
+	sentence_io io(U);
+	ifstream data(sentenceDB.datafile(),ios::app|ios::binary);
 
 	data.read((char*)&io,sizeof(io));
 
-	U=ExtractSentence_struc(io);
+	U=ExtractSentence(io);
 	data.close();
 }
-Sentence_strucResults* searchsentence_struc(sentence_struc &U)
+SentenceResults* searchsentence(sentence &U)
 {
-	sentence_struc_io io(U);
-	ifstream data(sentence_strucDB.datafile(),ios::binary);
+	SentenceResult.reset();
+	sentence_io io(U);
+	ifstream data(sentenceDB.datafile(),ios::binary);
 
-	while(!data.eof())
+	while(data.read((char*)&io,sizeof(io)))
 	{
-		data.read((char*)&io,sizeof(io));
-		sentence_struc extracted=ExtractSentence_struc(io);
+		sentence extracted=ExtractSentence(io);
 
 		if(strcmpi(extracted.all.c_str(),U.all.c_str())==0)
 		{
-			Sentence_strucResult.all.match_id=1;
-			Sentence_strucResult.loc=new sentence_struc(extracted);
+			SentenceResult.all.match_id=1;
+			SentenceResult.loc=new sentence(extracted);
 			if(strcmp(extracted.all.c_str(),U.all.c_str())==0)
 			{
-				Sentence_strucResult.all.match_id=2;
+				SentenceResult.all.match_id=2;
 			}
 			if(extracted.rating==U.rating)
 			{
-				Sentence_strucResult.rating.match_id=1;
+				SentenceResult.rating.match_id=1;
 			}
 			if(extracted.usage==U.usage)
 			{
-				Sentence_strucResult.usage.match_id=1;
+				SentenceResult.usage.match_id=1;
 			}
 		}
 	}
 	data.close();
-	return &Sentence_strucResult;
+	return &SentenceResult;
 }
 #endif /* DB_H_ */

@@ -245,7 +245,7 @@ public:
 		for(int i=0;i<=line&&image[i]!=NULL;i++)
 			SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
 	}
-	void input(string &temp)
+	void get(string &temp)
 	{
 		temp=text[0].substr(1,text[0].size()-1);
 		temp+=text[1].substr(0,text[1].size());

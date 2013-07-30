@@ -6,7 +6,6 @@
  */
 
 #include <headers/aria.hpp>
-#include <headers/sentence_struc.hpp>
 
 using namespace std;
 
@@ -14,16 +13,16 @@ int main (int argc, char* args[])
 {
 	ARIA aria(1080,720);
 
-	sentence_struc sen;
+	sentence sen;
 	framer frame(30,40);
 	graphicstringinput user;
 	string a;
-	a.assign(sen.all.c_str());
+	a.assign("startup");
 
 	graphicstring test;
 	test.set(a);
 
-	SDL_Delay(250);
+	SDL_Delay(100);
 	//get_input=SDL_CreateThread(getinput,input,NULL);
 	while(!ended)
 	{
@@ -34,10 +33,10 @@ int main (int argc, char* args[])
 		}
 		else
 		{//computers turn to speak!
-			user.input(a);
+			user.get(a);
 			sen.set(a.c_str());
-			searchsentence_struc(sen);
-			if(Sentence_strucResult.all.match_id==1)
+			searchsentence(sen);
+			if(SentenceResult.all.match_id==2)
 			{
 				test.set(sen.all.c_str());
 			}
@@ -45,7 +44,6 @@ int main (int argc, char* args[])
 			{
 				test.set("nope");
 			}
-			Sentence_strucResult.reset();
 			user.finished(false);
 		}
 		user.display();
