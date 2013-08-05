@@ -64,6 +64,34 @@ public:
 			progress+=text[line].size();
 		}
 	}
+	void set(const char* U)
+	{
+		string newstring;
+		newstring.assign(U);
+		unsigned int progress=0;
+		line=-1;
+		while(progress<newstring.size())
+		{
+			line++;
+			text[line].assign(newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress)));
+			progress+=text[line].size();
+		}
+	}
+	void set(int i)
+	{
+		char U[10];
+		itoa(i,U,10);
+		string newstring;
+		newstring.assign(U);
+		unsigned int progress=0;
+		line=-1;
+		while(progress<newstring.size())
+		{
+			line++;
+			text[line].assign(newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress)));
+			progress+=text[line].size();
+		}
+	}
 	graphicstring(string U_text="$",unsigned int Ugraphic_update_interval=50)
 	{
 		lines=3;

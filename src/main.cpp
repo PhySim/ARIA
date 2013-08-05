@@ -10,20 +10,20 @@
 using namespace std;
 
 int main (int argc, char* args[])
-{
-	ARIA aria(1080,720);
+{ARIA aria(1080,720);
 
+	word w;
 	sentence sen;
-	framer frame(30,40);
+
+	sentence_struc temp2;
+	read(temp2);
 	graphicstringinput user;
 	string a;
-	a.assign("startup");
 
 	graphicstring test;
-	test.set(a);
+	test.set(temp2.size);
 
 	SDL_Delay(100);
-	//get_input=SDL_CreateThread(getinput,input,NULL);
 	while(!ended)
 	{
 		aria.handleevents();
@@ -35,10 +35,10 @@ int main (int argc, char* args[])
 		{//computers turn to speak!
 			user.get(a);
 			sen.set(a.c_str());
-			searchsentence(sen);
-			if(SentenceResult.all.match_id==2)
+			sentence_struc temp(sen);
+			if(temp.struc[0].interjection.salutation)
 			{
-				test.set(sen.all.c_str());
+				test.set(temp.size);
 			}
 			else
 			{
@@ -48,10 +48,7 @@ int main (int argc, char* args[])
 		}
 		user.display();
 		test.display();
-		SDL_Flip(scr);
-		SDL_FillRect(scr,&scr->clip_rect,SDL_MapRGB(scr->format,0x0,0x0,0xFF));
-		SDL_Delay(10);
-		frame.endframe();
+		aria.endframe();
 	}
 	return 0;
 }

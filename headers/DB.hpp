@@ -43,7 +43,7 @@ public:
 	{
 		set(U_location,U_version,U_data_extension);
 	}
-}wordDB("databases","2","worddat"),sentenceDB("databases","1","sendat");
+}wordDB("databases","3","worddat"),sentenceDB("databases","1","sendat"),sentence_strucDB("databases","1","strucdat");
 
 struct SearchResults
 {
@@ -83,7 +83,7 @@ struct SentenceResults
 	}
 }SentenceResult;
 
-void writeword(word &U)
+void write(word &U)
 {
 	word_io io(U);
 
@@ -93,58 +93,44 @@ void writeword(word &U)
 
 	data.close();
 }
-void readword(word &U)
+void read(word &U)
 {
 	word_io word_io_buf;
 	ifstream data(wordDB.datafile(),ios::binary);
 
 	data.read((char*)&word_io_buf,sizeof(word_io_buf));
 
-	U=ExtractWord(word_io_buf);
+	ExtractWord(U,word_io_buf);
 
 	data.close();
 }
-WordResults* searchword(word U)
+bool searchword(const char* U,word &ret)
 {
+	bool found=false;
 	word_io io;
 	ifstream data(wordDB.datafile(),ios::binary);
 
 	while(data.read((char*)&io,sizeof(io)))
 	{
 
-		word extracted=ExtractWord(io);
+		word extracted;
+		ExtractWord(extracted,io);
 
-		if(strcmpi(extracted.name.c_str(),U.name.c_str())==0)
+		if(strcmpi(extracted.name.c_str(),U)==0)
 		{
-			WordResult.loc=new word(extracted);
-			WordResult.name.match_id=1;
-			if(strcmp(extracted.name.c_str(),U.name.c_str())==0)
-				{
-					WordResult.name.match_id=2;
-				}
-		}
-		if(strcmpi(extracted.type.c_str(),U.type.c_str())==0)
-		{
-			WordResult.type.match_id=1;
-			if(strcmp(extracted.type.c_str(),U.type.c_str())==0)
-				{
-					WordResult.type.match_id=2;
-				}
-		}
-		if(extracted.rating==U.rating)
-		{
-			WordResult.rating.match_id=1;
-		}
-		if(extracted.usage==U.usage)
-		{
-			WordResult.usage.match_id=1;
+			ret=extracted;
+			found=1;
+			if(strcmp(extracted.name.c_str(),U)==0)
+			{
+				found=2;
+			}
 		}
 	}
 	data.close();
-	return &WordResult;
+	return found;
 }
 
-void writesentence(sentence &U)
+void write(sentence &U)
 {
 	sentence_io io(U);
 	ofstream data(sentenceDB.datafile(),ios::app|ios::binary);
@@ -153,10 +139,10 @@ void writesentence(sentence &U)
 
 	data.close();
 }
-void readsentence(sentence &U)
+void read(sentence &U)
 {
 	sentence_io io(U);
-	ifstream data(sentenceDB.datafile(),ios::app|ios::binary);
+	ifstream data(sentenceDB.datafile(),ios::binary);
 
 	data.read((char*)&io,sizeof(io));
 
@@ -193,5 +179,34 @@ SentenceResults* searchsentence(sentence &U)
 	}
 	data.close();
 	return &SentenceResult;
+}
+sentence_struc::sentence_struc(sentence U)
+{
+	reset();
+	if(U.words.size())
+	{
+		for(unsigned int i=0;i<U.words.size();i++)
+		{
+			word temp;
+			if(searchword(U.words[i].c_str(),temp))
+			{
+				struc[i]=(temp.type);
+				size++;
+			}
+		}
+	}
+}
+
+void write(sentence_struc &U)
+{
+	ofstream data(sentence_strucDB.datafile(),ios::app|ios::binary);
+	data.write((char*)&U,sizeof(U));
+	data.close();
+}
+void read(sentence_struc &U)
+{
+	ofstream data(sentence_strucDB.datafile(),ios::binary);
+	data.write((char*)&U,sizeof(U));
+	data.close();
 }
 #endif /* DB_H_ */
