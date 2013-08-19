@@ -9,11 +9,11 @@
 #define GLOBAL_ASSETS_HPP_
 
 #include <SDL/SDL.h>
+#include <SDL/SDl_ttf.h>
 #include <string>
+#include <stdio.h>
 
 #include <physim/headers/framer.hpp>
-#include <headers/mutex.hpp>
-#include <headers/thread.hpp>
 
 
 using namespace std;
@@ -31,16 +31,49 @@ class graphicstring
 	int lines,line,xspacing,yspacing;
 	SDL_Rect rect[3];
 	string text[3];
+	string all;
+	TTF_Font* font;
+	SDL_Color TextColor;
+	void general_set()
+	{
+		for(int i=0;i<lines;i++)
+		{
+			text[i].clear();
+		}
+		unsigned int progress=0;
+		line=-1;
+		while(progress<all.size()&&line<lines-1)
+		{
+			line++;
+			all.push_back('\0');
+			text[line].assign(all.substr(progress,max_char<(all.size()-progress)?max_char:(all.size()-progress)));
+			progress+=text[line].size();
+			bool stop=false;
+			for(unsigned int i=0;i<text[line].size()&&!stop;i++)
+			{
+				if((text[line][i]=='\n'&&text[line][i+1]!='\0')&&line<lines-1)
+				{
+					text[line+1].assign(text[line].substr(i+1,text[line].size()-(i+2)));
+					text[line].erase(i,text[line].size());
+					stop=true;
+					line++;
+				}
+			}
+		}
+		renderimages(1);
+	}
 protected:
 	void renderimages(bool forced=0)
 	{
-		if(imagetimer.elapse()>graphic_update_interval)
+		if(imagetimer.elapse()>graphic_update_interval||forced)
 		{
 			for(int i=0;i<=line;i++)
 			{
 				if(text[i].size()>0)
 				{
-					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0xFF,0,0});
+					if(image[i]!=NULL)
+						SDL_FreeSurface(image[i]);
+					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),TextColor);
 					rect[i].w=image[i]->w;
 					rect[i].h=image[i]->h;
 				}
@@ -55,41 +88,50 @@ public:
 	bool done;
 	void set(string newstring)
 	{
-		unsigned int progress=0;
-		line=-1;
-		while(progress<newstring.size())
-		{
-			line++;
-			text[line].assign(newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress)));
-			progress+=text[line].size();
-		}
+		all.assign(newstring);
+		general_set();
 	}
 	void set(const char* U)
 	{
-		string newstring;
-		newstring.assign(U);
-		unsigned int progress=0;
-		line=-1;
-		while(progress<newstring.size())
-		{
-			line++;
-			text[line].assign(newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress)));
-			progress+=text[line].size();
-		}
+		all.assign(U);
+		general_set();
 	}
 	void set(int i)
 	{
 		char U[10];
 		itoa(i,U,10);
-		string newstring;
-		newstring.assign(U);
-		unsigned int progress=0;
-		line=-1;
-		while(progress<newstring.size())
+		all.assign(U);
+		general_set();
+	}
+	void set(double d)
+	{
+		char U[10];
+		sprintf(U,"%f",d);
+		all.assign(U);
+		general_set();
+	}
+	void set_font(SDL_Color Ucol)
+	{
+		TextColor=Ucol;
+	}
+	void set_font(int U_font_size,const char* font_loc="physim/fonts/lazy.ttf")
+	{
+		font=TTF_OpenFont(font_loc,U_font_size);
+		renderimages(1);
+	}
+	void set(unsigned int r,unsigned int g,unsigned int b)
+	{
+		TextColor.r=r;
+		TextColor.g=g;
+		TextColor.b=b;
+	}
+	void set(unsigned int x,unsigned int y)
+	{
+		xspacing=x;yspacing=y;
+		for(int i=0;i<lines;i++)
 		{
-			line++;
-			text[line].assign(newstring.substr(progress,max_char<(newstring.size()-progress)?max_char:(newstring.size()-progress)));
-			progress+=text[line].size();
+			rect[i].x=xspacing;
+			rect[i].y=yspacing+(i)*global_font_size;
 		}
 	}
 	graphicstring(string U_text="$",unsigned int Ugraphic_update_interval=50)
@@ -99,11 +141,15 @@ public:
 		xspacing=10;yspacing=10;
 		max_char=2*(scr->w-xspacing)/global_font_size;
 		graphic_update_interval=Ugraphic_update_interval;
+		TextColor.r=255;
+		TextColor.g=0;TextColor.b=0;
+		font=::font;
 		for(int i=0;i<lines;i++)
 		{
 			text[i]="";
 			rect[i].x=xspacing;
 			rect[i].y=yspacing+(global_graphicstring_id*(lines+1)+i)*global_font_size;
+			image[i]=NULL;
 		}
 		global_graphicstring_id++;
 		set(U_text);
@@ -114,12 +160,18 @@ public:
 	{
 		for(int i=0;i<lines;i++)
 			SDL_FreeSurface(image[i]);
+		if(font!=::font)
+			TTF_CloseFont(font);
 	}
 	void display()
 	{
 		renderimages();
 		for(int i=0;i<=line&&image[i]!=NULL;i++)
 			SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
+	}
+	const char* c_str()
+	{
+		return all.c_str();
 	}
 };
 
@@ -157,6 +209,8 @@ public:
 			{
 				if(text[i].size()>0)
 				{
+					if(image[i]!=NULL)
+						SDL_FreeSurface(image[i]);
 					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),(SDL_Color){0,0xFF,0});
 					rect[i].w=image[i]->w;
 					rect[i].h=image[i]->h;
@@ -174,6 +228,8 @@ public:
 		max_char=2*(scr->w-xspacing)/global_font_size;
 		start_time=UstartT;repeat_time=UrepeatT;graphic_update_interval=Ugraphic_update_interval;
 		reset();
+		for(int i=0;i<lines;i++)
+			image[i]=NULL;
 		renderimages(1);
 		new_char=0;
 		global_graphicstring_id++;
