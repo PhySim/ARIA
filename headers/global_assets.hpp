@@ -114,7 +114,7 @@ public:
 	{
 		TextColor=Ucol;
 	}
-	void set_font(int U_font_size,const char* font_loc="physim/fonts/lazy.ttf")
+	void set_font(int U_font_size,const char* font_loc="Fonts/lazy.ttf")
 	{
 		font=TTF_OpenFont(font_loc,U_font_size);
 		renderimages(1);
