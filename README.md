@@ -1,4 +1,6 @@
-PhySim
+ARIA
+A         R        I         A
+Automated Response Iteration Assembly
 ======
 
 ## The What
@@ -11,13 +13,9 @@ While this meant to be a private project, we loved using GitHub and so are using
 
 ## The Who
 
-This project is developed by these awesome people:-
+This project is developed by:-
 
-1. [YatharthROCK](https://trello.com/physsim)
-1. [Reuben John](https://plus.google.com/u/0/109803240246916286497/about)
-1. Aayush Naik
-1. Divanshu Jain
-1. Nehal Jalal
+[Reuben John](https://plus.google.com/u/0/109803240246916286497/about)
 
 
 ## The How
