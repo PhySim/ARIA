@@ -22,7 +22,6 @@ void error(const char* E)
 	log<<E;
 	log.close();
 }
-bool ended=0;
 SDL_Surface* scr;
 SDL_Event event;
 unsigned int global_font_size=32,global_graphicstring_id=0;
@@ -67,9 +66,9 @@ protected:
 		}
 		renderimages(1);
 	}
-	void renderimages(bool forced=0)
+	bool renderimages(bool forced=0)
 	{
-		if(imagetimer.elapse()>graphic_update_interval||forced)
+		if((imagetimer.elapse()>graphic_update_interval||forced)&&font)
 		{
 			for(int i=0;i<=line;i++)
 			{
@@ -77,7 +76,6 @@ protected:
 				{
 					if(image[i]!=NULL)
 						SDL_FreeSurface(image[i]);
-					if(font)
 						image[i]=TTF_RenderText_Solid(font,text[i].c_str(),TextColor);
 					rect[i].w=image[i]->w;
 					rect[i].h=image[i]->h;
@@ -86,7 +84,9 @@ protected:
 			}
 			imagetimer.reset();
 			imagetimer.start();
+			return true;
 		}
+		else return false;
 	}
 public:
 	bool done;
@@ -120,11 +120,15 @@ public:
 	}
 	void set_font(int U_font_size,const char* font_loc="Fonts/KeraterMedium.ttf")
 	{
+		if(font)
+			TTF_CloseFont(font);
 		font=TTF_OpenFont(font_loc,U_font_size);
 		if(!font)
-		error("graphicstring::TTF_OpenFont:");
-		error(font_loc);
-		error("	failed!");
+		{
+			error("graphicstring::TTF_OpenFont:");
+			error(font_loc);
+			error("	failed!");
+		}
 		renderimages(1);
 	}
 	void set_color(unsigned int r,unsigned int g,unsigned int b)
@@ -142,6 +146,10 @@ public:
 			rect[i].y=yspacing+(i)*global_font_size;
 		}
 	}
+	void set_position(vect position)
+	{
+		set_position(position.x,position.y);
+	}
 	void set_update_interval(unsigned int Ugraphic_update_interval=50)
 	{
 		graphic_update_interval=Ugraphic_update_interval;
@@ -152,10 +160,12 @@ public:
 		lines=3;
 		line=done=0;
 		xspacing=10;yspacing=10;
+		font=NULL;
 		//max_char=2*(scr->w-xspacing)/global_font_size;
 		graphic_update_interval=Ugraphic_update_interval;
 		TextColor.r=255;
-		TextColor.g=0;TextColor.b=0;
+		TextColor.g=0;
+		TextColor.b=0;
 		set_font(font_size,font_loc);
 		for(int i=0;i<lines;i++)
 		{
