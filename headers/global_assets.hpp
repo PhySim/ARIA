@@ -12,20 +12,98 @@
 #include <SDL/SDl_ttf.h>
 #include <string>
 #include <stdio.h>
+#include <vector>
 
 #include <physim/headers/framer.hpp>
+
+#define load_font(A,B) TTF_OpenFont(A,B)
 
 using namespace std;
 void error(const char* E)
 {
 	ofstream log("logs/global_assets.hpp.txt",ios::app);
-	log<<E;
+	log<<E<<'\n';
 	log.close();
 }
 SDL_Surface* scr;
 SDL_Event event;
-unsigned int global_font_size=32,global_graphicstring_id=0;
+unsigned int global_graphicstring_id=0;
 
+/*const char* default_font_loc="Fonts/KeraterMedium.ttf";
+unsigned int default_font_size=28;*/
+
+struct FONT
+{
+	string font_loc;
+	unsigned int size;
+	TTF_Font* font;
+	FONT(const char* U_font_loc,unsigned int U_font_size,TTF_Font* U_font=NULL)
+	{
+		font_loc=U_font_loc;
+		size=U_font_size;
+		if(font)
+			font=U_font;
+		else
+			TTF_OpenFont(U_font_loc,U_font_size);
+	}
+};
+class FONT_POCKET
+{
+	vector<FONT>fonts;
+	FONT default_font;
+public:
+	TTF_Font* new_font(const char* U_font_loc,unsigned int U_font_size)
+	{
+		for(unsigned int i=0;i<fonts.size();i++)
+		{
+			if(fonts[i].size==U_font_size)
+			{
+				if(fonts[i].font_loc.compare(U_font_loc)==0)
+				{
+					return fonts[i].font;
+				}
+			}
+		}
+		TTF_Font* font=TTF_OpenFont(U_font_loc,U_font_size);
+		if(font)
+		{
+			fonts.push_back(FONT(U_font_loc,U_font_size,font));
+			ofstream fout("logs/allocation log.txt",ios::app);
+			fout<<"Font "<<U_font_loc<<"("<<fonts[fonts.size()-1].font<<") loaded into slot "<<(fonts.size()-1)<<'\n';
+			fout.close();
+			return fonts[fonts.size()-1].font;
+		}
+		return NULL;
+	}
+	TTF_Font* new_font()
+	{
+		return default_font.font;
+	}
+	FONT_POCKET(FONT U_default_font):default_font(U_default_font)
+	{
+	}
+	~FONT_POCKET()
+	{
+		ofstream fout("logs/allocation log.txt",ios::app);
+		fout<<"\nEmptying font pocket("<<fonts.size()<<" fonts to close):";
+		for(unsigned int i=fonts.size()-1;i>=0;i--)
+		{
+			if(fonts[i].font)
+			{
+				try
+				{
+					TTF_CloseFont(fonts[i].font);
+					fout<<"Font "<<i<<" closed\n";
+				}
+				catch(...)
+				{
+					fout<<"Closing font "<<i<<" failed!\n";
+				}
+			}
+		}
+		fout.close();
+	}
+};
 class graphicstring
 {
 protected:
@@ -38,6 +116,8 @@ protected:
 	string all;
 	TTF_Font* font;
 	SDL_Color TextColor;
+	bool font_loaded;
+
 	void general_set()
 	{
 		for(int i=0;i<lines;i++)
@@ -46,6 +126,7 @@ protected:
 		}
 		unsigned int progress=0;
 		line=-1;
+		compute_size_limit();
 		while(progress<all.size()&&line<lines-1)
 		{
 			line++;
@@ -66,21 +147,52 @@ protected:
 		}
 		renderimages(1);
 	}
+	unsigned int compute_size_limit()
+	{
+		if(rect[0].h)
+			max_char=2*(scr->w-xspacing)/rect[0].h;
+		else
+			max_char=40;
+		return max_char;
+	}
 	bool renderimages(bool forced=0)
 	{
 		if((imagetimer.elapse()>graphic_update_interval||forced)&&font)
 		{
 			for(int i=0;i<=line;i++)
 			{
-				if(text[i].size()>0)
+				if(text[i].size()>0&&font_loaded)
 				{
 					if(image[i]!=NULL)
-						SDL_FreeSurface(image[i]);
-						image[i]=TTF_RenderText_Solid(font,text[i].c_str(),TextColor);
-					rect[i].w=image[i]->w;
-					rect[i].h=image[i]->h;
+					{
+						try
+						{
+							SDL_FreeSurface(image[i]);
+						}
+						catch(...)
+						{
+							ofstream fout("logs/allocation log.txt",ios::app);
+							fout<<"graphicstring::renderimages FreeSurface() failed\n";
+							fout.close();
+						}
+					}
+					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),TextColor);
+					if(image[i])
+					{
+						rect[i].w=image[i]->w;
+						rect[i].h=image[i]->h;
+						if(forced)
+						{
+							set_position(xspacing,yspacing);
+						}
+					}
+					else
+					{
+						ofstream fout("logs/allocation log.txt",ios::app);
+						fout<<"graphicstring::renderimages: Failed to render text image "<<i<<'\n';
+						fout.close();
+					}
 				}
-				else image[i]=NULL;
 			}
 			imagetimer.reset();
 			imagetimer.start();
@@ -95,10 +207,18 @@ public:
 		all.assign(newstring);
 		general_set();
 	}
-	void set(const char* U)
+	void operator=(string newstring)
 	{
-		all.assign(U);
+		set(newstring);
+	}
+	void set(const char* new_text)
+	{
+		all.assign(new_text);
 		general_set();
+	}
+	void operator=(const char* new_text)
+	{
+		set(new_text);
 	}
 	void set(int i)
 	{
@@ -107,6 +227,10 @@ public:
 		all.assign(U);
 		general_set();
 	}
+	void operator=(int i)
+	{
+		set(i);
+	}
 	void set(double d)
 	{
 		char U[10];
@@ -114,20 +238,28 @@ public:
 		all.assign(U);
 		general_set();
 	}
+	void operator=(double d)
+	{
+		set(d);
+	}
 	void set_color(SDL_Color Ucol)
 	{
 		TextColor=Ucol;
 	}
-	void set_font(int U_font_size,const char* font_loc="Fonts/KeraterMedium.ttf")
+	void set_font(TTF_Font* U_font)
 	{
-		if(font)
-			TTF_CloseFont(font);
-		font=TTF_OpenFont(font_loc,U_font_size);
-		if(!font)
+		ofstream fout("logs/allocation log.txt",ios::app);
+		fout<<"graphicstring::set_font received font : "<<U_font<<'\n';
+		fout.close();
+		if(U_font)
 		{
-			error("graphicstring::TTF_OpenFont:");
-			error(font_loc);
-			error("	failed!");
+			font=U_font;
+			font_loaded=true;
+		}
+		else
+		{
+			font_loaded=false;
+			error("graphicstring::set_font received NULL font!");
 		}
 		renderimages(1);
 	}
@@ -137,13 +269,18 @@ public:
 		TextColor.g=g;
 		TextColor.b=b;
 	}
-	void set_position(unsigned int x,unsigned int y)
+	void set_position(int x,int y)
 	{
+		if(x!=xspacing||y!=yspacing)
+		{
+			if(imagetimer.elapse()>graphic_update_interval)
+				general_set();
+		}
 		xspacing=x;yspacing=y;
 		for(int i=0;i<lines;i++)
 		{
 			rect[i].x=xspacing;
-			rect[i].y=yspacing+(i)*global_font_size;
+			rect[i].y=yspacing+(i)*rect[i].h;
 		}
 	}
 	void set_position(vect position)
@@ -154,7 +291,7 @@ public:
 	{
 		graphic_update_interval=Ugraphic_update_interval;
 	}
-	graphicstring(SDL_Surface* screen,string U_text="$",int font_size=28,const char* font_loc="Fonts/KeraterMedium.ttf",unsigned int Ugraphic_update_interval=50)
+	graphicstring(SDL_Surface* screen,TTF_Font* U_font=NULL,string U_text="$",unsigned int Ugraphic_update_interval=50)
 	{
 		scr=screen;
 		lines=3;
@@ -166,12 +303,12 @@ public:
 		TextColor.r=255;
 		TextColor.g=0;
 		TextColor.b=0;
-		set_font(font_size,font_loc);
+		set_font(U_font);
 		for(int i=0;i<lines;i++)
 		{
 			text[i]="";
 			rect[i].x=xspacing;
-			rect[i].y=yspacing+(global_graphicstring_id*(lines+1)+i)*global_font_size;
+			rect[i].y=yspacing;
 			image[i]=NULL;
 		}
 		global_graphicstring_id++;
@@ -190,7 +327,10 @@ public:
 	{
 		renderimages();
 		for(int i=0;i<=line&&image[i]!=NULL;i++)
-			SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
+		{
+			if(image[i])
+				SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
+		}
 	}
 	const char* c_str()
 	{
@@ -213,7 +353,7 @@ class graphicstringinput:public graphicstring
 		{
 			text[i].assign("");
 			rect[i].x=xspacing;
-			rect[i].y=yspacing+i*global_font_size;
+			rect[i].y=yspacing;
 			if(image[i])
 			{
 				SDL_FreeSurface(image[i]);
@@ -226,9 +366,9 @@ class graphicstringinput:public graphicstring
 	}
 public:
 	bool done;
-	graphicstringinput(SDL_Surface* screen,string U_text="$",int font_size=28,const char* font_loc="Fonts/KeraterMedium.ttf",unsigned int UstartT=500,unsigned int UrepeatT=25,unsigned int Ugraphic_update_interval=50):graphicstring(screen,U_text,font_size,font_loc,Ugraphic_update_interval)
+	graphicstringinput(SDL_Surface* screen,TTF_Font* U_font=NULL,string U_text="$",unsigned int UstartT=500,unsigned int UrepeatT=25,unsigned int Ugraphic_update_interval=50):graphicstring(screen,U_font,U_text,Ugraphic_update_interval)
 	{
-		max_char=2*(scr->w-xspacing)/global_font_size;
+		max_char=2*(scr->w-xspacing)/10;
 		start_time=UstartT;repeat_time=UrepeatT;
 		for(int i=0;i<lines;i++)
 			image[i]=NULL;
