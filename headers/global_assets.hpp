@@ -25,7 +25,6 @@ void error(const char* E)
 	log<<E<<'\n';
 	log.close();
 }
-SDL_Surface* scr;
 SDL_Event event;
 unsigned int global_graphicstring_id=0;
 
@@ -69,7 +68,7 @@ public:
 		{
 			fonts.push_back(FONT(U_font_loc,U_font_size,font));
 			ofstream fout("logs/allocation log.txt",ios::app);
-			fout<<"Font "<<U_font_loc<<"("<<fonts[fonts.size()-1].font<<") loaded into slot "<<(fonts.size()-1)<<'\n';
+			fout<<"Font "<<U_font_loc<<" "<<U_font_size<<" ("<<fonts[fonts.size()-1].font<<") loaded into slot "<<(fonts.size()-1)<<'\n';
 			fout.close();
 			return fonts[fonts.size()-1].font;
 		}
@@ -104,241 +103,173 @@ public:
 		fout.close();
 	}
 };
-class graphicstring
+
+class GRAPHIC_STRING
 {
 protected:
-	timer imagetimer;
-	unsigned int graphic_update_interval,max_char;
-	int lines,line,xspacing,yspacing;
-	SDL_Surface *scr,*image[3];
-	SDL_Rect rect[3];
-	string text[3];
-	string all;
+	SDL_Surface* scr;
+	SDL_Rect rect;
+	SDL_Surface* image;
 	TTF_Font* font;
-	SDL_Color TextColor;
-	bool font_loaded;
-
-	void general_set()
+	SDL_Color col;
+	string all;
+	unsigned int update_interval;
+	timer imagetimer;
+	bool fresh_data;
+	void render_image(bool forced=false)
 	{
-		for(int i=0;i<lines;i++)
+		if(imagetimer.elapse()>update_interval||forced)
 		{
-			text[i].clear();
-		}
-		unsigned int progress=0;
-		line=-1;
-		compute_size_limit();
-		while(progress<all.size()&&line<lines-1)
-		{
-			line++;
-			all.push_back('\0');
-			text[line].assign(all.substr(progress,max_char<(all.size()-progress)?max_char:(all.size()-progress)));
-			progress+=text[line].size();
-			bool stop=false;
-			for(unsigned int i=0;i<text[line].size()&&!stop;i++)
+			if(image)
 			{
-				if((text[line][i]=='\n'&&text[line][i+1]!='\0')&&line<lines-1)
+				try
 				{
-					text[line+1].assign(text[line].substr(i+1,text[line].size()-(i+2)));
-					text[line].erase(i,text[line].size());
-					stop=true;
-					line++;
+					SDL_FreeSurface(image);
+				}
+				catch(...)
+				{
+					ofstream fout("logs/log.txt",ios::app);
+					fout<<"GRAPHIC_STRING::render_image failed to free surface\n";
+					fout.close();
 				}
 			}
-		}
-		renderimages(1);
-	}
-	unsigned int compute_size_limit()
-	{
-		if(rect[0].h)
-			max_char=2*(scr->w-xspacing)/rect[0].h;
-		else
-			max_char=40;
-		return max_char;
-	}
-	bool renderimages(bool forced=0)
-	{
-		if((imagetimer.elapse()>graphic_update_interval||forced)&&font)
-		{
-			for(int i=0;i<=line;i++)
+			image=NULL;
+			if(font)
 			{
-				if(text[i].size()>0&&font_loaded)
+				if(!all.empty())
 				{
-					if(image[i]!=NULL)
-					{
-						try
-						{
-							SDL_FreeSurface(image[i]);
-						}
-						catch(...)
-						{
-							ofstream fout("logs/allocation log.txt",ios::app);
-							fout<<"graphicstring::renderimages FreeSurface() failed\n";
-							fout.close();
-						}
-					}
-					image[i]=TTF_RenderText_Solid(font,text[i].c_str(),TextColor);
-					if(image[i])
-					{
-						rect[i].w=image[i]->w;
-						rect[i].h=image[i]->h;
-						if(forced)
-						{
-							set_position(xspacing,yspacing);
-						}
-					}
-					else
-					{
-						ofstream fout("logs/allocation log.txt",ios::app);
-						fout<<"graphicstring::renderimages: Failed to render text image "<<i<<'\n';
-						fout.close();
-					}
+					image=TTF_RenderText_Solid(font,all.c_str(),col);
+					rect.w=image->clip_rect.w;
+					rect.h=image->clip_rect.h;
 				}
+				else
+				{
+					ofstream fout("logs/log.txt",ios::app);
+					fout<<"GRAPHIC_STRING::render_image string empty\n";
+					fout.close();
+					rect.w=rect.h=0;
+					image=NULL;
+				}
+			}
+			else
+			{
+				ofstream fout("logs/log.txt",ios::app);
+				fout<<"GRAPHIC_STRING::render_image attempted NULL font Rendering\n";
+				fout.close();
 			}
 			imagetimer.reset();
 			imagetimer.start();
-			return true;
 		}
-		else return false;
 	}
 public:
-	bool done;
-	void set(string newstring)
+	SDL_Rect rectangle()
 	{
-		all.assign(newstring);
-		general_set();
+		return rect;
 	}
 	void operator=(string newstring)
 	{
-		set(newstring);
+		bool force_render=all.empty();
+		all.assign(newstring);
+		render_image(force_render);
 	}
-	void set(const char* new_text)
+	void operator=(const char* text)
 	{
-		all.assign(new_text);
-		general_set();
-	}
-	void operator=(const char* new_text)
-	{
-		set(new_text);
-	}
-	void set(int i)
-	{
-		char U[10];
-		itoa(i,U,10);
-		all.assign(U);
-		general_set();
+		bool force_render=all.empty();
+		all.assign(text);
+		ofstream fout("logs/log.txt",ios::app);
+		fout<<"GRAPHIC_STRING calling general_set for '"<<all<<"' with force_render="<<force_render<<'\n';
+		fout.close();
+		render_image(force_render);
 	}
 	void operator=(int i)
 	{
-		set(i);
-	}
-	void set(double d)
-	{
 		char U[10];
-		sprintf(U,"%f",d);
+		itoa(i,U,10);
+		bool force_render=all.empty();
 		all.assign(U);
-		general_set();
+		render_image(force_render);
 	}
 	void operator=(double d)
 	{
-		set(d);
+		bool force_render=all.empty();
+		char U[10];
+		sprintf(U,"%f",d);
+		all.assign(U);
+		render_image(force_render);
 	}
-	void set_color(SDL_Color Ucol)
+	void set_font(TTF_Font * Font)
 	{
-		TextColor=Ucol;
-	}
-	void set_font(TTF_Font* U_font)
-	{
-		ofstream fout("logs/allocation log.txt",ios::app);
-		fout<<"graphicstring::set_font received font : "<<U_font<<'\n';
+		ofstream fout("logs/log.txt",ios::app);
+		fout<<"GRAPHIC_STRING::set_font received font : "<<Font<<'\n';
 		fout.close();
-		if(U_font)
+		if(Font)
 		{
-			font=U_font;
-			font_loaded=true;
+			font=Font;
+			render_image(1);
+		}
+	}
+	void set_position(unsigned int x,unsigned int y)
+	{
+			rect=((SDL_Rect){x,y});
+	}
+	void set_position(vect pos)
+	{
+		set_position(pos.x,pos.y);
+	}
+	void set_color(short unsigned int r,short unsigned int g,short unsigned int b)
+	{
+		col=(SDL_Color){r,g,b};
+	}
+	void set_update_interval(unsigned int Update_interval)
+	{
+		update_interval=Update_interval;
+	}
+	GRAPHIC_STRING(SDL_Surface* screen,TTF_Font* Font=NULL,unsigned int Update_interval=100)
+	{
+		scr=screen;
+		image=NULL;
+		rect.w=rect.h=0;
+		font=Font;
+		col=(SDL_Color){0,0,0};
+		set_position(10,10);
+		update_interval=Update_interval;
+		fresh_data=false;
+		all.clear();
+		imagetimer.start();
+	}
+	void display(bool demand_rendering=false)
+	{
+		render_image(demand_rendering);
+		if(scr)
+		{
+			if(image)
+				SDL_BlitSurface(image,NULL,scr,&rect);
+			else
+			{
+				ofstream fout("logs/log.txt",ios::app);
+				fout<<"GRAPHIC_STRING::display image NULL access\n";
+				fout.close();
+			}
 		}
 		else
 		{
-			font_loaded=false;
-			error("graphicstring::set_font received NULL font!");
-		}
-		renderimages(1);
-	}
-	void set_color(unsigned int r,unsigned int g,unsigned int b)
-	{
-		TextColor.r=r;
-		TextColor.g=g;
-		TextColor.b=b;
-	}
-	void set_position(int x,int y)
-	{
-		if(x!=xspacing||y!=yspacing)
-		{
-			if(imagetimer.elapse()>graphic_update_interval)
-				general_set();
-		}
-		xspacing=x;yspacing=y;
-		for(int i=0;i<lines;i++)
-		{
-			rect[i].x=xspacing;
-			rect[i].y=yspacing+(i)*rect[i].h;
+			ofstream fout("logs/log.txt",ios::app);
+			fout<<"GRAPHIC_STRING::display scr NULL access\n";
+			fout.close();
 		}
 	}
-	void set_position(vect position)
+	~GRAPHIC_STRING()
 	{
-		set_position(position.x,position.y);
-	}
-	void set_update_interval(unsigned int Ugraphic_update_interval=50)
-	{
-		graphic_update_interval=Ugraphic_update_interval;
-	}
-	graphicstring(SDL_Surface* screen,TTF_Font* U_font=NULL,string U_text="$",unsigned int Ugraphic_update_interval=50)
-	{
-		scr=screen;
-		lines=3;
-		line=done=0;
-		xspacing=10;yspacing=10;
-		font=NULL;
-		//max_char=2*(scr->w-xspacing)/global_font_size;
-		graphic_update_interval=Ugraphic_update_interval;
-		TextColor.r=255;
-		TextColor.g=0;
-		TextColor.b=0;
-		set_font(U_font);
-		for(int i=0;i<lines;i++)
-		{
-			text[i]="";
-			rect[i].x=xspacing;
-			rect[i].y=yspacing;
-			image[i]=NULL;
-		}
-		global_graphicstring_id++;
-		set(U_text);
-		renderimages(1);
-		imagetimer.start();
-	}
-	~graphicstring()
-	{
-		for(int i=0;i<lines;i++)
-			SDL_FreeSurface(image[i]);
-		if(font)
-			TTF_CloseFont(font);
-	}
-	void display()
-	{
-		renderimages();
-		for(int i=0;i<=line&&image[i]!=NULL;i++)
-		{
-			if(image[i])
-				SDL_BlitSurface(image[i],NULL,scr,&rect[i]);
-		}
-	}
-	const char* c_str()
-	{
-		return all.c_str();
+		ofstream fout("logs/allocation log.txt",ios::app);
+		fout<<"GRAPHIC_STRING destroyed\n";
+		fout.close();
+		if(image)
+			SDL_FreeSurface(image);
+		all.clear();
 	}
 };
-string buf;
-class graphicstringinput:public graphicstring
+
+class GRAPHIC_STRING_INPUT:public GRAPHIC_STRING
 {
 	char new_char;
 	timer imagetimer;
@@ -348,37 +279,30 @@ class graphicstringinput:public graphicstring
 	SDL_Color TextColor;
 	void reset()
 	{
-		line=done=0;
-		for(int i=0;i<lines;i++)
+		done=false;
+		fresh_data=false;
+		all.clear();
+		if(image)
 		{
-			text[i].assign("");
-			rect[i].x=xspacing;
-			rect[i].y=yspacing;
-			if(image[i])
-			{
-				SDL_FreeSurface(image[i]);
-			}
-			image[i]=NULL;
+			SDL_FreeSurface(image);
+			image=NULL;
+			rect.w=rect.h=0;
 		}
-		text[0].assign("$");
 		imagetimer.reset();
 		imagetimer.start();
+
 	}
 public:
 	bool done;
-	graphicstringinput(SDL_Surface* screen,TTF_Font* U_font=NULL,string U_text="$",unsigned int UstartT=500,unsigned int UrepeatT=25,unsigned int Ugraphic_update_interval=50):graphicstring(screen,U_font,U_text,Ugraphic_update_interval)
+	GRAPHIC_STRING_INPUT(SDL_Surface* screen,TTF_Font* U_font=NULL,unsigned int UstartT=500,unsigned int UrepeatT=25,unsigned int Ugraphic_update_interval=50):GRAPHIC_STRING(screen,U_font,Ugraphic_update_interval)
 	{
-		max_char=2*(scr->w-xspacing)/10;
 		start_time=UstartT;repeat_time=UrepeatT;
-		for(int i=0;i<lines;i++)
-			image[i]=NULL;
 		new_char=0;
 		finished();
 	}
-	~graphicstringinput()
+	~GRAPHIC_STRING_INPUT()
 	{
-		for(int i=0;i<lines;i++)
-			SDL_FreeSurface(image[i]);
+		SDL_FreeSurface(image);
 	}
 	void handle_input(SDL_Event event)
 	{
@@ -428,25 +352,14 @@ public:
 						//do nothing
 					break;
 					case SDLK_BACKSPACE:
-						if(text[line].size()>1)
-							text[line].erase(text[line].size()-1);
-						else if(line>0)
-						{
-							text[line]="";
-							line--;
-						}
+						if(all.size()>0)
+							all.erase(all.size()-1);
 					break;
 					case SDLK_RETURN:
 						finished();
 					break;
 					default:
-						if(text[line].size()<max_char)
-							text[line]+=new_char;
-						else if(line+1<lines)
-						{
-							line++;
-							text[line]+=new_char;
-						}
+						all+=new_char;
 					break;
 					}
 				}
@@ -466,10 +379,7 @@ public:
 	}
 	const char* get()
 	{
-		buf=text[0].substr(1,text[0].size()-1);
-		buf+=text[1].substr(0,text[1].size());
-		buf+=text[2].substr(0,text[2].size());
-		return buf.c_str();
+		return all.c_str();
 	}
 	void finished(bool U=true)
 	{
