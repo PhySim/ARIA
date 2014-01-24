@@ -189,13 +189,17 @@ public:
 		all.assign(U);
 		render_image(force_render);
 	}
-	void operator=(double d)
+	void set(double d,const char* format="%8.2f")
 	{
 		bool force_render=all.empty();
 		char U[10];
-		sprintf(U,"%f",d);
+		sprintf(U,format,d);
 		all.assign(U);
 		render_image(force_render);
+	}
+	void operator=(double d)
+	{
+		set(d);
 	}
 	void set_font(TTF_Font * Font)
 	{
