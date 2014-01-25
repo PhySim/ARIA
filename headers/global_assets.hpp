@@ -279,7 +279,7 @@ class GRAPHIC_STRING_INPUT:public GRAPHIC_STRING
 	timer imagetimer;
 	timer start,repeat;
 	unsigned int start_time,repeat_time;
-
+	bool done;
 	SDL_Color TextColor;
 	void reset()
 	{
@@ -297,7 +297,6 @@ class GRAPHIC_STRING_INPUT:public GRAPHIC_STRING
 
 	}
 public:
-	bool done;
 	GRAPHIC_STRING_INPUT(SDL_Surface* screen,TTF_Font* U_font=NULL,unsigned int UstartT=500,unsigned int UrepeatT=25,unsigned int Ugraphic_update_interval=50):GRAPHIC_STRING(screen,U_font,Ugraphic_update_interval)
 	{
 		start_time=UstartT;repeat_time=UrepeatT;
@@ -307,6 +306,10 @@ public:
 	~GRAPHIC_STRING_INPUT()
 	{
 		SDL_FreeSurface(image);
+	}
+	bool completed()
+	{
+		return done;
 	}
 	void handle_input(SDL_Event event)
 	{
