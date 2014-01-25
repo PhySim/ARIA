@@ -201,6 +201,14 @@ public:
 	{
 		set(d);
 	}
+	bool operator==(const char* text)
+	{
+		return all.compare(text)==0;
+	}
+	bool operator!=(const char* text)
+	{
+		return !(all.compare(text)==0);
+	}
 	void set_font(TTF_Font * Font)
 	{
 		ofstream fout("logs/log.txt",ios::app);
