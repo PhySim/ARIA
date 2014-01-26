@@ -116,51 +116,6 @@ protected:
 	unsigned int update_interval;
 	timer imagetimer;
 	bool fresh_data;
-	void render_image(bool forced=false)
-	{
-		if(imagetimer.elapse()>update_interval||forced)
-		{
-			if(image)
-			{
-				try
-				{
-					SDL_FreeSurface(image);
-				}
-				catch(...)
-				{
-					ofstream fout("logs/log.txt",ios::app);
-					fout<<"GRAPHIC_STRING::render_image failed to free surface\n";
-					fout.close();
-				}
-			}
-			image=NULL;
-			if(font)
-			{
-				if(!all.empty())
-				{
-					image=TTF_RenderText_Solid(font,all.c_str(),col);
-					rect.w=image->clip_rect.w;
-					rect.h=image->clip_rect.h;
-				}
-				else
-				{
-					ofstream fout("logs/log.txt",ios::app);
-					fout<<"GRAPHIC_STRING::render_image string empty\n";
-					fout.close();
-					rect.w=rect.h=0;
-					image=NULL;
-				}
-			}
-			else
-			{
-				ofstream fout("logs/log.txt",ios::app);
-				fout<<"GRAPHIC_STRING::render_image attempted NULL font Rendering\n";
-				fout.close();
-			}
-			imagetimer.reset();
-			imagetimer.start();
-		}
-	}
 public:
 	SDL_Rect rectangle()
 	{
@@ -181,13 +136,17 @@ public:
 		fout.close();
 		render_image(force_render);
 	}
-	void operator=(int i)
+	void set(int i)
 	{
 		char U[10];
 		itoa(i,U,10);
 		bool force_render=all.empty();
 		all.assign(U);
 		render_image(force_render);
+	}
+	void operator=(int i)
+	{
+		set(i);
 	}
 	void set(double d,const char* format="%8.2f")
 	{
@@ -248,6 +207,51 @@ public:
 		fresh_data=false;
 		all.clear();
 		imagetimer.start();
+	}
+	void render_image(bool forced=false)
+	{
+		if(imagetimer.elapse()>update_interval||forced)
+		{
+			if(image)
+			{
+				try
+				{
+					SDL_FreeSurface(image);
+				}
+				catch(...)
+				{
+					ofstream fout("logs/log.txt",ios::app);
+					fout<<"GRAPHIC_STRING::render_image failed to free surface\n";
+					fout.close();
+				}
+			}
+			image=NULL;
+			if(font)
+			{
+				if(!all.empty())
+				{
+					image=TTF_RenderText_Solid(font,all.c_str(),col);
+					rect.w=image->clip_rect.w;
+					rect.h=image->clip_rect.h;
+				}
+				else
+				{
+					ofstream fout("logs/log.txt",ios::app);
+					fout<<"GRAPHIC_STRING::render_image string empty\n";
+					fout.close();
+					rect.w=rect.h=0;
+					image=NULL;
+				}
+			}
+			else
+			{
+				ofstream fout("logs/log.txt",ios::app);
+				fout<<"GRAPHIC_STRING::render_image attempted NULL font Rendering\n";
+				fout.close();
+			}
+			imagetimer.reset();
+			imagetimer.start();
+		}
 	}
 	void display(bool demand_rendering=false)
 	{
