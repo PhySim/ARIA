@@ -104,6 +104,15 @@ public:
 	}
 };
 
+char* get_formatted_time(char* &result,unsigned int milliseconds,const char* format)
+{
+	int seconds = (int) (milliseconds / 1000) % 60 ;
+	int minutes = (int) ((milliseconds / (1000*60)) % 60);
+	int hours   = (int) ((milliseconds / (1000*60*60)) % 24);
+	sprintf(result,format,hours,minutes,seconds);
+	return result;
+}
+
 class GRAPHIC_STRING
 {
 protected:
@@ -159,6 +168,36 @@ public:
 	void operator=(double d)
 	{
 		set(d);
+	}
+	void set_time(unsigned int milliseconds)
+	{
+		all.clear();
+		int seconds = (int) (milliseconds / 1000) % 60 ;
+		int minutes = (int) ((milliseconds / (1000*60)) % 60);
+		int hours   = (int) ((milliseconds / (1000*60*60)) % 24);
+
+		int remaining_milliseconds= (int) (milliseconds) % 1000 ;
+
+		char C[4]="";
+		itoa(hours,C,10);
+		if(strlen(C)==1)
+			all="0";
+		all+=C;all+=":";
+		itoa(minutes,C,10);
+		if(strlen(C)==1)
+			all+="0";
+		all+=C;all+=":";
+		itoa(seconds,C,10);
+		if(strlen(C)==1)
+			all+="0";
+		all+=C;all+=".";
+		itoa(remaining_milliseconds,C,10);
+		if(strlen(C)==1)
+			all+="0";
+		all+=C;
+
+		//----------------------------
+		all.erase(0,3);
 	}
 	bool operator==(const char* text)
 	{
