@@ -104,15 +104,53 @@ public:
 	}
 };
 
-char* get_formatted_time(char* &result,unsigned int milliseconds,const char* format)
+const char* millisecond_fotmatted_string(int milliseconds)
 {
+	string result;
+	bool negative=milliseconds<0;
+	if(negative)
+		milliseconds=-milliseconds;
 	int seconds = (int) (milliseconds / 1000) % 60 ;
 	int minutes = (int) ((milliseconds / (1000*60)) % 60);
 	int hours   = (int) ((milliseconds / (1000*60*60)) % 24);
-	sprintf(result,format,hours,minutes,seconds);
-	return result;
+
+	int remaining_milliseconds= (int) (milliseconds) % 1000 ;
+
+	char C[4]="";
+	itoa(hours,C,10);
+	if(strlen(C)==1)
+		result="0";
+	result+=C;result+=":";
+	itoa(minutes,C,10);
+	if(strlen(C)==1)
+		result+="0";
+	result+=C;result+=":";
+	itoa(seconds,C,10);
+	if(strlen(C)==1)
+		result+="0";
+	result+=C;result+=".";
+	itoa(remaining_milliseconds,C,10);
+	if(strlen(C)==1)
+		result+="0";
+	result+=C;
+
+	//----------------------------
+	result.erase(0,3);
+	if(negative)
+	{
+		result.insert(0,1,'-');
+	}
+	return result.c_str();
 }
 
+const char* decimal_format_string(double d,const char* format="%8.2f")
+{
+	string temp;
+	char U[30];
+	sprintf(U,format,d);
+	temp.assign(U);
+	return temp.c_str();
+}
 class GRAPHIC_STRING
 {
 protected:
@@ -125,53 +163,40 @@ protected:
 	unsigned int update_interval;
 	timer imagetimer;
 	bool fresh_data;
+	void general_set(const char* new_string,bool force_render=false)
+	{
+		all.assign(new_string);
+		render_image(force_render);
+	}
 public:
 	SDL_Rect rectangle()
 	{
 		return rect;
 	}
-	void operator=(string newstring)
+	virtual void operator=(const char* text)
 	{
-		bool force_render=all.empty();
-		all.assign(newstring);
-		render_image(force_render);
+		general_set(text,all.empty());
 	}
-	void operator=(const char* text)
+	virtual void operator=(string newstring)
 	{
-		bool force_render=all.empty();
-		all.assign(text);
-		ofstream fout("logs/log.txt",ios::app);
-		fout<<"GRAPHIC_STRING calling general_set for '"<<all<<"' with force_render="<<force_render<<'\n';
-		fout.close();
-		render_image(force_render);
+		general_set(newstring.c_str(),all.empty());
 	}
-	void set(int i)
+	virtual void operator=(int i)
 	{
 		char U[10];
 		itoa(i,U,10);
-		bool force_render=all.empty();
-		all.assign(U);
-		render_image(force_render);
+		general_set(U,all.empty());
 	}
-	void operator=(int i)
+	virtual void operator=(double d)
 	{
-		set(i);
+		general_set(decimal_format_string(d),all.empty());
 	}
-	void set(double d,const char* format="%8.2f")
-	{
-		bool force_render=all.empty();
-		char U[10];
-		sprintf(U,format,d);
-		all.assign(U);
-		render_image(force_render);
-	}
-	void operator=(double d)
-	{
-		set(d);
-	}
-	void set_time(unsigned int milliseconds)
+	void set_time(int milliseconds)
 	{
 		all.clear();
+		bool negative=milliseconds<0;
+		if(negative)
+			milliseconds=-milliseconds;
 		int seconds = (int) (milliseconds / 1000) % 60 ;
 		int minutes = (int) ((milliseconds / (1000*60)) % 60);
 		int hours   = (int) ((milliseconds / (1000*60*60)) % 24);
@@ -198,6 +223,10 @@ public:
 
 		//----------------------------
 		all.erase(0,3);
+		if(negative)
+		{
+			all.insert(0,1,'-');
+		}
 	}
 	bool operator==(const char* text)
 	{
@@ -313,7 +342,7 @@ public:
 			fout.close();
 		}
 	}
-	~GRAPHIC_STRING()
+	virtual ~GRAPHIC_STRING()
 	{
 		ofstream fout("logs/allocation log.txt",ios::app);
 		fout<<"GRAPHIC_STRING destroyed\n";
@@ -357,6 +386,22 @@ public:
 	~GRAPHIC_STRING_INPUT()
 	{
 		SDL_FreeSurface(image);
+	}
+	void operator=(const char* text)
+	{
+		GRAPHIC_STRING::operator=(text);
+	}
+	void operator=(string newstring)
+	{
+		GRAPHIC_STRING::operator=(newstring);
+	}
+	void operator=(int i)
+	{
+		GRAPHIC_STRING::operator=(i);
+	}
+	void operator=(double d)
+	{
+		GRAPHIC_STRING::operator=(d);
 	}
 	bool completed()
 	{
