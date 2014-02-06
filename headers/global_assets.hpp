@@ -16,21 +16,7 @@
 
 #include <physim/headers/framer.hpp>
 
-#define load_font(A,B) TTF_OpenFont(A,B)
-
 using namespace std;
-void error(const char* E)
-{
-	ofstream log("logs/global_assets.hpp.txt",ios::app);
-	log<<E<<'\n';
-	log.close();
-}
-SDL_Event event;
-unsigned int global_graphicstring_id=0;
-
-/*const char* default_font_loc="Fonts/KeraterMedium.ttf";
-unsigned int default_font_size=28;*/
-
 struct FONT
 {
 	string font_loc;
